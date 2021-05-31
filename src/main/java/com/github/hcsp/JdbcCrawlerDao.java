@@ -8,7 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class JdbcCrawlerDao implements CrawlerJdbc {
+public class JdbcCrawlerDao implements CrawlerDao {
     private static final String ACCOUNT_NAME = "root";
     private static final String PASSWORDS = "root";
     private static final String DATA_BASE_URL = "jdbc:h2:file:/Users/mac/IdeaProjects/MyProject/xiedaimale-crawler/News";
@@ -48,7 +48,7 @@ public class JdbcCrawlerDao implements CrawlerJdbc {
         }
     }
 
-    public String getNextLink(String sql) throws SQLException {
+    private String getNextLink(String sql) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             ResultSet result = statement.executeQuery();
             if (result.next()) {
@@ -64,6 +64,22 @@ public class JdbcCrawlerDao implements CrawlerJdbc {
             statement.setString(1, title);
             statement.setString(2, content);
             statement.setString(3, url);
+            statement.executeUpdate();
+        }
+    }
+
+    @Override
+    public void insertProcessedLink(String link) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO LINKS_ALREADY_PROCESSED (link)values (?) ")) {
+            statement.setString(1, link);
+            statement.executeUpdate();
+        }
+    }
+
+    @Override
+    public void insertLinkToBeProcessed(String href) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement("INSERT INTO LINKS_TO_BE_PROCESSED (link)values (?)")) {
+            statement.setString(1, href);
             statement.executeUpdate();
         }
     }
