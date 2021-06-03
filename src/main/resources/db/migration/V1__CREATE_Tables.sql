@@ -1,8 +1,8 @@
-create table LINKS_TO_BE_PROCESSED
+create table LINKS_ALREADY_PROCESSED
 (
     link varchar(2000)
 );
-create table LINKS_ALREADY_PROCESSED
+create table LINKS_TO_BE_PROCESSED
 (
     link varchar(2000)
 );
@@ -12,6 +12,6 @@ create table NEWS
     title       text,
     content     text,
     url         varchar(2000),
-    CREATED_AT  timestamp,
-    MODIFIED_AT timestamp
-);
+    CREATED_AT  timestamp default now(),
+    MODIFIED_AT timestamp default now()
+)DEFAULT CHARSET=utf8mb4;

@@ -4,7 +4,7 @@ import java.sql.SQLException;
 
 public interface CrawlerDao {
     String getNextLinkThenDelete() throws SQLException;
-    
+
     boolean isLinkProcessed(String link) throws SQLException;
 
     void insertNewsIntoDataBase(String url, String title, String content) throws SQLException;

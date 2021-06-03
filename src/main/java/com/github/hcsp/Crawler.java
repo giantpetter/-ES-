@@ -16,29 +16,33 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 
 
-public class Crawler {
+public class Crawler extends Thread {
+    CrawlerDao Dao;
 
-    CrawlerDao Dao = new MyBatisDao();
+    public Crawler(CrawlerDao dao) {
+        Dao = dao;
+    }
 
-    public void run() throws SQLException, IOException {
-        String link;
-        while ((link = Dao.getNextLinkThenDelete()) != null) {
-            if (Dao.isLinkProcessed(link)) {
-                continue;
+    @Override
+    public void run() {
+        try {
+            String link;
+            while ((link = Dao.getNextLinkThenDelete()) != null) {
+                if (Dao.isLinkProcessed(link)) {
+                    continue;
+                }
+                if (isInterestingLink(link)) {
+                    Document doc = httpGetAndParseHtml(link);
+                    parseUrlsFromPageAndStoreIntoDatabase(doc);
+                    storeIntoDataBaseIfItIsNewsPage(doc, link);
+                    Dao.insertProcessedLink(link);
+                }
             }
-            if (isInterestingLink(link)) {
-                Document doc = httpGetAndParseHtml(link);
-                parseUrlsFromPageAndStoreIntoDatabase(doc);
-                storeIntoDataBaseIfItIsNewsPage(doc, link);
-                Dao.insertProcessedLink(link);
-            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
-
-    public static void main(String[] args) throws IOException, SQLException {
-        new Crawler().run();
-    }
 
     private void parseUrlsFromPageAndStoreIntoDatabase(Document doc) throws SQLException {
         for (Element aTag : doc.select("a")) {
@@ -46,13 +50,12 @@ public class Crawler {
             if (href.startsWith("//")) {
                 href = "https:" + href;
             }
-            if (!href.toLowerCase().startsWith("java")) {
+            if (!href.toLowerCase().startsWith("java") && !href.equals("")) {
                 System.out.println(href);
                 Dao.insertLinkToBeProcessed(href);
             }
         }
     }
-
 
     private static Document httpGetAndParseHtml(String link) throws IOException {
         CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -64,7 +67,6 @@ public class Crawler {
             String html = EntityUtils.toString(entity);
             return Jsoup.parse(html);
         }
-
     }
 
     public void storeIntoDataBaseIfItIsNewsPage(Document doc, String link) throws SQLException {
